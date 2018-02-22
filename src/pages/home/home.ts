@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
-import { NavController } from 'ionic-angular';
-import { RestProvider } from '../../providers/rest/rest';
+import { NavController, ToastController } from 'ionic-angular';
+import { AddDataPage } from '../add-data/add-data';
+import { EditDataPage } from '../edit-data/edit-data';
+import { ExpensesProvider } from '../../providers/expenses/expenses';
 
 
 @Component({
@@ -9,32 +11,54 @@ import { RestProvider } from '../../providers/rest/rest';
 })
 export class HomePage {
 
-	countries: any;
-	errorMsg: string;
+	expenses: any = [];
+  totalIncome = 0;
+  totalExpense = 0;
+  balance = 0;
 
-	descending: boolean = false;
-	order: number;
-	column: string = 'name';
-	terms: string;
-
-  constructor(public navCtrl: NavController, public restProv: RestProvider) {
+  constructor(public navCtrl: NavController,
+    private rest: ExpensesProvider,
+    private toast: ToastController) {
 
   }
 
   ionViewDidLoad() {
-    this.getCountries();
+    this.getData();
   }
 
-  getCountries() {
-    this.restProv.getCountries()
-       .subscribe(
-         countries => this.countries = countries,
-         error =>  this.errorMsg = <any>error);
+  ionViewWillEnter() {
+    this.getData();
   }
 
-  sort(){
-	  this.descending = !this.descending;
-	  this.order = this.descending ? 1 : -1;
-	}
+  getData() {
+    this.rest.all()
+      .then(data => {
+        this.expenses = data;
+        console.log(this.expenses);
+      });
+  }
+
+  addData() {
+    this.navCtrl.push(AddDataPage);
+  }
+
+  editData(id) {
+    this.navCtrl.push(EditDataPage, {
+      id:id
+    });
+  }
+
+  deleteData(id) {
+    this.rest.delete(id)
+      .then(result => {
+        console.log('borrado'+result);
+        let toast = this.toast.create({
+            message: 'Expense was deleted successfully',
+            duration: 3000
+          });
+          toast.present();
+        this.getData();
+      });
+  }
 
 }
